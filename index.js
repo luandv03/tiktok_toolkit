@@ -8,6 +8,7 @@ const puppeteer = require("puppeteer-extra");
 const pluginStealth = require("puppeteer-extra-plugin-stealth");
 const { Headers } = require("node-fetch");
 const fs = require("fs");
+const path = require("path");
 
 // Use stealth
 puppeteer.use(pluginStealth());
@@ -26,31 +27,7 @@ const headersWm = new Headers();
 headersWm.append(
     "User-Agent",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-    // "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"
 );
-
-// scrapes user and their top 5 video details
-async function scrapeCreator(browser, username) {
-    let page = await browser.newPage();
-    await page.goto("https://tiktok.com/" + username);
-    await page.waitForSelector('div[data-e2e="user-post-item-desc"] a');
-
-    // parse user's video data
-    let videoLinks = [];
-    links = await page.$$('div[data-e2e="user-post-item-desc"] a');
-
-    for (const link of links) {
-        videoLinks.push(
-            await link.evaluate((node) => node.getAttribute("href"))
-        );
-    }
-
-    const arr = videoLinks.filter((item) => item.includes("https"));
-
-    console.log(arr);
-
-    await page.close();
-}
 
 async function getAllVideosByUsername(username) {
     const scrollDelay = 3000; // Thời gian chờ sau mỗi lần cuộn (3 giây)
@@ -76,7 +53,7 @@ async function getAllVideosByUsername(username) {
     try {
         let previousHeight;
         let scrollAttempts = 0;
-        const maxScrollAttempts = 10; // Giới hạn số lần cuộn trang
+        const maxScrollAttempts = 2; // Giới hạn số lần cuộn trang
 
         let videoList = [];
 
@@ -173,8 +150,38 @@ const getVideoNoWM = async (url) => {
     return data;
 };
 
+//download single video
+const folder = "downloads/";
+
+// Function to download a single video
+const downloadSingleVideo = async (item) => {
+    return new Promise((resolve, reject) => {
+        const fileName = `${item.id}-${item.desc}.mp4`;
+        const downloadFile = fetch(item.url);
+        const file = fs.createWriteStream(folder + fileName);
+
+        downloadFile
+            .then((res) => {
+                res.body.pipe(file);
+                file.on("finish", () => {
+                    file.close();
+                    resolve();
+                });
+
+                file.on("error", (err) => {
+                    file.close();
+                    reject(err);
+                });
+            })
+            .catch((err) => {
+                console.log(`[x] Erro: ${err}`);
+                reject(err);
+            });
+    });
+};
+
 // ##### download many video concurrent
-const downloadMediaFromList2 = async (list, concurrencyLimit) => {
+const downloadMediaFromList = async (list, concurrencyLimit) => {
     const folder = "downloads/";
 
     // Function to download a single video
@@ -241,10 +248,39 @@ const downloadMediaFromList2 = async (list, concurrencyLimit) => {
 };
 
 app.get("/", (req, res) => {
-    res.send("Hello");
+    res.sendFile(path.join(__dirname + "/index.html"));
 });
 
-app.get("/snapchat", async (req, res) => {
+app.get("/download_video_by_url", async (req, res) => {
+    await getVideoNoWM(
+        "https://www.tiktok.com/@gdfactoryclips/video/7265739675288079634?is_from_webapp=1&sender_device=pc"
+    )
+        .then(async (res) => {
+            await downloadSingleVideo(res)
+                .then(() => {
+                    return res.status(200).json({
+                        statusCode: 200,
+                        message: "Download video successfull",
+                    });
+                })
+                .catch((err) => {
+                    return {
+                        statusCode: 400,
+                        message: "Download video failure",
+                        error: err,
+                    };
+                });
+        })
+        .catch((err) => {
+            return res.status(400).json({
+                statusCode: 400,
+                message: "Download video failre . Can't fetch data from url",
+                error: err,
+            });
+        });
+});
+
+app.get("/download_list_by_username", async (req, res) => {
     const listVideo = await getAllVideosByUsername("@revistahola.mx");
 
     // let listMedia = [];
@@ -273,7 +309,7 @@ app.get("/snapchat", async (req, res) => {
 
             const limitVideoConcurrentlyDownloaded = 10;
 
-            await downloadMediaFromList2(
+            await downloadMediaFromList(
                 dataGood,
                 limitVideoConcurrentlyDownloaded
             )

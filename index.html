@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Tiktok tool</title>
+        <!-- <link rel="stylesheet" href="./styles.css" /> -->
+
+        <style>
+            * {
+                box-sizing: border-box;
+                padding: 0;
+                margin: 0;
+            }
+
+            body {
+                font-family: "Open Sans", sans-serif;
+                font-size: 10px;
+            }
+
+            .tiktok__container {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+            }
+            .tiktok__content {
+                width: 100%;
+                padding-top: 10rem;
+            }
+            .tiktok__header__title {
+                font-size: 2.4rem;
+                color: blue;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+
+            .tiktok__body {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+            }
+            .tiktok__body__bar {
+                display: flex;
+                height: 40px;
+            }
+            .tiktok__body__bar--input {
+                flex: 1;
+                height: 100%;
+                font-size: 1.2rem;
+                border-radius: 4px;
+                outline: none;
+                border: 1px solid rgb(199, 188, 188);
+                margin-right: 10px;
+                padding: 0.4rem;
+            }
+            .tiktok__body__bar--button {
+                width: 60px;
+                height: 100%;
+                background-color: rgb(38, 224, 38);
+                color: white;
+                cursor: pointer;
+                border: none;
+                border-radius: 4px;
+            }
+
+            .tiktok__body__bar--button:hover {
+                box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+                margin-top: 1px;
+                margin-left: 1px;
+            }
+
+            .tiktok__body__bar--button:active {
+                opacity: 0.8;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="tiktok__container">
+            <div class="tiktok__content">
+                <div class="titkok__header">
+                    <h1 class="tiktok__header__title">Tiktok Toolkit</h1>
+                </div>
+
+                <div class="tiktok__body">
+                    <div class="tiktok__body__bar">
+                        <input
+                            class="tiktok__body__bar--input"
+                            placeholder="Enter tiktok url...."
+                        />
+
+                        <button class="tiktok__body__bar--button">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script type="text/javascript">
+        const buttonSend = document.querySelector(".tiktok__body__bar--button");
+        const inputUrl = document.querySelector(".tiktok__body__bar--input");
+
+        buttonSend.onclick = async function () {
+            if (!inputUrl.value) {
+                alert("Please enter a valid URL");
+            } else {
+                await fetch("http://localhost:3000/download_video_by_url", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        // 'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: JSON.stringify({
+                        url: inputUrl.value,
+                    }),
+                })
+                    .then((res) => {
+                        console.log("data: " + res);
+                    })
+                    .catch((err) => {
+                        console.log("have error: " + err);
+                    });
+            }
+        };
+    </script>
+</html>

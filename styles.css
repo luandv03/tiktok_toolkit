@@ -1,0 +1,48 @@
+* {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: "Open Sans", sans-serif;
+    font-size: 1.6rem;
+}
+
+.tiktok__container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.tiktok__content {
+    width: 100%;
+}
+.tiktok__header__title {
+    font-size: 2.4rem;
+    color: blue;
+}
+
+.tiktok__body {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.tiktok__body__bar {
+    display: flex;
+    height: 40px;
+}
+.tiktok__body__bar--input {
+    flex: 1;
+    height: 100%;
+    font-size: 1.6rem;
+    border-radius: 4px;
+    outline: none;
+    border: 1px solid rgb(199, 188, 188);
+}
+.tiktok__body__bar--button {
+    width: 60px;
+    height: 100%;
+    background-color: rgb(38, 224, 38);
+    color: white;
+    cursor: pointer;
+}
