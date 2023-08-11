@@ -1,3 +1,5 @@
+const { getDataVideo } = require("./server");
+
 const express = require("express");
 
 // const puppeteer = require("puppeteer");
@@ -155,29 +157,33 @@ const folder = "downloads/";
 
 // Function to download a single video
 const downloadSingleVideo = async (item) => {
-    return new Promise((resolve, reject) => {
-        const fileName = `${item.id}-${item.desc}.mp4`;
-        const downloadFile = fetch(item.url);
-        const file = fs.createWriteStream(folder + fileName);
+    const downloadFile = await getDataVideo(item.url);
 
-        downloadFile
-            .then((res) => {
-                res.body.pipe(file);
-                file.on("finish", () => {
-                    file.close();
-                    resolve();
-                });
+    console.log(downloadFile);
+    // return new Promise((resolve, reject) => {
+    //     const fileName = `${item.id}-${item.desc}.mp4`;
+    //     const downloadFile = fetch(item.url);
 
-                file.on("error", (err) => {
-                    file.close();
-                    reject(err);
-                });
-            })
-            .catch((err) => {
-                console.log(`[x] Erro: ${err}`);
-                reject(err);
-            });
-    });
+    //     // const file = fs.createWriteStream(folder + fileName);
+
+    //     downloadFile
+    //         .then((res) => {
+    //             console.log(res);
+    //             // res.body.pipe(file);
+    //             // file.on("finish", () => {
+    //             //     file.close();
+    //             //     resolve();
+    //             // });
+    //             // file.on("error", (err) => {
+    //             //     file.close();
+    //             //     reject(err);
+    //             // });
+    //         })
+    //         .catch((err) => {
+    //             console.log(`[x] Erro: ${err}`);
+    //             reject(err);
+    //         });
+    // });
 };
 
 // ##### download many video concurrent
@@ -253,7 +259,7 @@ app.get("/", (req, res) => {
 
 app.get("/download_video_by_url", async (req, res) => {
     await getVideoNoWM(
-        "https://www.tiktok.com/@gdfactoryclips/video/7265739675288079634?is_from_webapp=1&sender_device=pc"
+        "https://www.tiktok.com/@gdfactoryclips/video/7265771848686718216"
     )
         .then(async (res) => {
             await downloadSingleVideo(res)
