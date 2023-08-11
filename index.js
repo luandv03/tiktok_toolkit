@@ -1,10 +1,7 @@
-const { getDataVideo } = require("./server");
+const { getDataVideo } = require("./helper/getDataVideo.js");
+const { downloadSingleVideo } = require("./helper/downloadSingleVideo.js");
 
 const express = require("express");
-
-// const puppeteer = require("puppeteer");
-//save to executable path
-// const { executablePath } = require("puppeteer"); // lúc trước cái này ở trong lauch
 
 const puppeteer = require("puppeteer-extra");
 const pluginStealth = require("puppeteer-extra-plugin-stealth");
@@ -122,68 +119,38 @@ const getIdVideo = (url) => {
 };
 
 const getVideoNoWM = async (url) => {
-    const idVideo = await getIdVideo(url);
-    const API_URL = `https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/feed/?aweme_id=${idVideo}`;
-
-    const request = await fetch(API_URL, {
-        method: "GET",
-        headers: headers,
-    });
-
-    const body = await request.text();
-
     try {
-        var res = JSON.parse(body);
-    } catch (err) {
-        console.error("Error:", err);
-        console.error("Response body:", body);
+        const idVideo = await getIdVideo(url);
+        const API_URL = `https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/feed/?aweme_id=${idVideo}`;
+
+        const request = await fetch(API_URL, {
+            method: "GET",
+            headers: headers,
+        });
+
+        const body = await request.text();
+
+        try {
+            var res = JSON.parse(body);
+        } catch (err) {
+            console.error("Error:", err);
+            console.error("Response body:", body);
+        }
+        // console.log(res.aweme_list[0]); lấy ra thông tin của toàn bộ video
+
+        const specialCharacters = /[\\/:*?"<>|\.]/g; // có ký tự '|' ở tên file sẽ bị lỗi
+        const desc = res.aweme_list[0].desc.replace(specialCharacters, "");
+
+        const urlMedia = res.aweme_list[0].video.play_addr.url_list[0];
+        const data = {
+            url: urlMedia,
+            id: idVideo,
+            desc: desc.length >= 193 ? desc.slice(0, 193) : desc,
+        };
+        return data;
+    } catch (error) {
+        console.log(error);
     }
-    // console.log(res.aweme_list[0]); lấy ra thông tin của toàn bộ video
-
-    const specialCharacters = /[\\/:*?"<>|\.]/g; // có ký tự '|' ở tên file sẽ bị lỗi
-    const desc = res.aweme_list[0].desc.replace(specialCharacters, "");
-
-    const urlMedia = res.aweme_list[0].video.play_addr.url_list[0];
-    const data = {
-        url: urlMedia,
-        id: idVideo,
-        desc: desc.length >= 193 ? desc.slice(0, 193) : desc,
-    };
-    return data;
-};
-
-//download single video
-const folder = "downloads/";
-
-// Function to download a single video
-const downloadSingleVideo = async (item) => {
-    const downloadFile = await getDataVideo(item.url);
-
-    console.log(downloadFile);
-    // return new Promise((resolve, reject) => {
-    //     const fileName = `${item.id}-${item.desc}.mp4`;
-    //     const downloadFile = fetch(item.url);
-
-    //     // const file = fs.createWriteStream(folder + fileName);
-
-    //     downloadFile
-    //         .then((res) => {
-    //             console.log(res);
-    //             // res.body.pipe(file);
-    //             // file.on("finish", () => {
-    //             //     file.close();
-    //             //     resolve();
-    //             // });
-    //             // file.on("error", (err) => {
-    //             //     file.close();
-    //             //     reject(err);
-    //             // });
-    //         })
-    //         .catch((err) => {
-    //             console.log(`[x] Erro: ${err}`);
-    //             reject(err);
-    //         });
-    // });
 };
 
 // ##### download many video concurrent
@@ -258,11 +225,11 @@ app.get("/", (req, res) => {
 });
 
 app.get("/download_video_by_url", async (req, res) => {
-    await getVideoNoWM(
+    getVideoNoWM(
         "https://www.tiktok.com/@gdfactoryclips/video/7265771848686718216"
     )
-        .then(async (res) => {
-            await downloadSingleVideo(res)
+        .then(async (data) => {
+            await downloadSingleVideo(data)
                 .then(() => {
                     return res.status(200).json({
                         statusCode: 200,
@@ -270,12 +237,19 @@ app.get("/download_video_by_url", async (req, res) => {
                     });
                 })
                 .catch((err) => {
-                    return {
+                    return res.status(400).json({
                         statusCode: 400,
                         message: "Download video failure",
                         error: err,
-                    };
+                    });
                 });
+
+            // can't set header after is sent to client
+            // lỗi này đã xuất hiện khi tôi để finally(() => {return res.status(200).json({})})
+            // lỗi ở đây là do khi tôi đã trả kết quả về cho client bên trong .then() thì lúc này
+            // nó đã đánh dấu kết thúc 1 request nhưng sau đó nó lại tiếp tục được gọi
+            // bên trong hàm .finally nên sẽ sinh ra lỗi này vì kết quả đã được trả về cho client
+            // ở hàm .then phía trên trong lần request này
         })
         .catch((err) => {
             return res.status(400).json({
@@ -288,8 +262,6 @@ app.get("/download_video_by_url", async (req, res) => {
 
 app.get("/download_list_by_username", async (req, res) => {
     const listVideo = await getAllVideosByUsername("@revistahola.mx");
-
-    // let listMedia = [];
 
     const arr = [];
 
