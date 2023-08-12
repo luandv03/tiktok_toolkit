@@ -1,5 +1,5 @@
-const getVideoNoWM = require("../../helper/getVideoNoWM.helper");
-const downloadSingleVideo = require("../../helper/downloadSingleVideo.helper");
+const getVideoNoWM = require("../../helper/getVideoNoWM.helper.js");
+const downloadSingleVideo = require("../../helper/downloadSingleVideo.helper.js");
 const getAllUrlVideoByUsername = require("../../helper/getAllUrlVideoByUsername.js");
 const downloadMediaFromList = require("../../helper/downloadMediaFromList.js");
 

@@ -27,4 +27,4 @@ const downloadSingleVideo = async (item) => {
     });
 };
 
-module.exports = { downloadSingleVideo };
+module.exports = downloadSingleVideo;

@@ -13,10 +13,10 @@ tiktokRoues.get("/download/video_by_url", tiktokController.downloadVideoByUrl);
 //get list good data by username
 tiktokRoues.get(
     "/get/data_list_video_by_username",
-    tiktokController.getDataListVideo
+    tiktokController.getGoodDataByUsername
 );
 
 //download list video
-tiktokRoues.get("/download/list_video", tiktokController.downloadListVideo);
+tiktokRoues.get("/download/list_video", tiktokController.downloadVideoFromList);
 
 module.exports = tiktokRoues;
